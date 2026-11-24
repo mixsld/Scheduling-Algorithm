@@ -1,6 +1,5 @@
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import javax.swing.BorderFactory;
@@ -10,27 +9,17 @@ import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
-/**
- * Entry point and main menu of the CPU and Disk Scheduling Simulator.
- * Shows the four assigned algorithms grouped as CPU Scheduling and Disk Scheduling,
- * plus About and Exit. Each algorithm opens in its own screen inside this window.
- */
 public final class SchedulingSimulator extends JFrame {
+    private static final String GROUP_NAME = "All Star";
+    private static final String[] MEMBERS = {"Justin Panghulan", "Jared Esguerra", "Deinhiel Gonzales"};
 
-    // TODO before submission: fill in the real group number, member names and assigned algorithms.
-    private static final String GROUP_NUMBER = "Group [No.]";
-    private static final String[][] MEMBERS = {
-        {"[Member 1 name]", "FCFS (CPU)"},
-        {"[Member 2 name]", "Priority - Preemptive (CPU)"},
-        {"[Member 3 name]", "C-SCAN (Disk)"},
-        {"[Member 4 name]", "FCFS (Disk)"},
-    };
+    private static final int[][] FCFS_SAMPLE = {{1, 0, 21, 0}, {2, 0, 3, 0}, {3, 0, 6, 0}, {4, 0, 2, 0}};
+    private static final int[][] PRIORITY_SAMPLE = {{1, 0, 11, 2}, {2, 5, 28, 0}, {3, 12, 2, 3}, {4, 2, 10, 1}, {5, 9, 16, 4}};
 
     private static final String MENU = "menu";
     private final CardLayout cards = new CardLayout();
@@ -41,8 +30,8 @@ public final class SchedulingSimulator extends JFrame {
         setDefaultCloseOperation(EXIT_ON_CLOSE);
 
         root.add(buildMenu(), MENU);
-        addModule("cpu-fcfs", new CpuModulePanel(new FcfsScheduler(), this::showMenu));
-        addModule("cpu-priority", new CpuModulePanel(new PreemptivePriorityScheduler(), this::showMenu));
+        addModule("cpu-fcfs", new CpuModulePanel(new FcfsScheduler(), FCFS_SAMPLE, this::showMenu));
+        addModule("cpu-priority", new CpuModulePanel(new PreemptivePriorityScheduler(), PRIORITY_SAMPLE, this::showMenu));
         addModule("disk-cscan", new DiskModulePanel(new CScanScheduler(), this::showMenu));
         addModule("disk-fcfs", new DiskModulePanel(new DiskFcfsScheduler(), this::showMenu));
 
@@ -60,13 +49,10 @@ public final class SchedulingSimulator extends JFrame {
         cards.show(root, MENU);
     }
 
-    // ---------------------------------------------------------------- main menu
-
     private JPanel buildMenu() {
         JPanel page = new JPanel(new BorderLayout());
         page.setBackground(Ui.BG);
-        page.add(Ui.headerBar("CPU and Disk Scheduling Simulator", "ICS26012 – Operating Systems", null),
-                BorderLayout.NORTH);
+        page.add(Ui.headerBar("CPU and Disk Scheduling Simulator", null, null), BorderLayout.NORTH);
 
         JPanel groups = new JPanel(new GridLayout(1, 2, 24, 0));
         groups.setOpaque(false);
@@ -88,7 +74,7 @@ public final class SchedulingSimulator extends JFrame {
         JButton about = Ui.secondaryButton("About");
         about.addActionListener(e -> showAbout());
         JButton exit = Ui.secondaryButton("Exit");
-        exit.addActionListener(e -> confirmExit());
+        exit.addActionListener(e -> System.exit(0));
         JPanel footer = new JPanel(new GridLayout(1, 2, 12, 0));
         footer.setOpaque(false);
         footer.add(about);
@@ -129,13 +115,10 @@ public final class SchedulingSimulator extends JFrame {
         body.setBackground(Ui.PANEL);
         body.setBorder(BorderFactory.createEmptyBorder(20, 28, 20, 28));
 
-        body.add(aboutLine("CPU and Disk Scheduling Simulator", Ui.BASE.deriveFont(java.awt.Font.BOLD, 18f), Ui.INK));
-        body.add(aboutLine("ICS26012 – Operating Systems", Ui.BASE, Ui.MUTED));
-        body.add(Box.createVerticalStrut(14));
-        body.add(aboutLine(GROUP_NUMBER, Ui.BASE.deriveFont(java.awt.Font.BOLD, 16f), Ui.TEXT));
-        body.add(Box.createVerticalStrut(8));
-        for (String[] member : MEMBERS) {
-            body.add(aboutLine(member[0] + "  –  " + member[1], Ui.BASE, Ui.TEXT));
+        body.add(aboutLine(GROUP_NAME, Ui.BASE.deriveFont(java.awt.Font.BOLD, 18f)));
+        body.add(Box.createVerticalStrut(10));
+        for (String member : MEMBERS) {
+            body.add(aboutLine(member, Ui.BASE));
         }
 
         JButton close = Ui.primaryButton("Close");
@@ -152,28 +135,18 @@ public final class SchedulingSimulator extends JFrame {
         dialog.setVisible(true);
     }
 
-    private static JLabel aboutLine(String text, java.awt.Font font, Color color) {
+    private static JLabel aboutLine(String text, java.awt.Font font) {
         JLabel label = new JLabel(text);
         label.setFont(font);
-        label.setForeground(color);
+        label.setForeground(Ui.INK);
         label.setAlignmentX(LEFT_ALIGNMENT);
         return label;
-    }
-
-    private void confirmExit() {
-        int choice = JOptionPane.showConfirmDialog(this, "Exit the simulator?", "Exit",
-                JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
-        if (choice == JOptionPane.YES_OPTION) {
-            dispose();
-            System.exit(0);
-        }
     }
 
     public static void main(String[] args) {
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (Exception ignored) {
-            // fall back to the default Swing look
         }
         SwingUtilities.invokeLater(() -> new SchedulingSimulator().setVisible(true));
     }

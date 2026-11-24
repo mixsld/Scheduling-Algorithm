@@ -2,17 +2,14 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-/** Output of a CPU scheduler: per-process rows, the Gantt chart and the summary metrics. */
 public final class CpuResult {
-
-    /** Per-process figures. Formulas follow the project conventions (section 4.3). */
     static final class Row {
         final CpuProcess process;
         final int firstStart;
         final int completion;
-        final int turnaround; // completion - arrival
-        final int waiting;    // turnaround - burst
-        final int response;   // first CPU time - arrival
+        final int turnaround;
+        final int waiting;
+        final int response;
 
         Row(CpuProcess process, int firstStart, int completion) {
             this.process = process;
@@ -37,10 +34,6 @@ public final class CpuResult {
         this.totalTime = totalTime;
     }
 
-    double avgCompletion() {
-        return rows.stream().mapToInt(r -> r.completion).average().orElse(0);
-    }
-
     double avgTurnaround() {
         return rows.stream().mapToInt(r -> r.turnaround).average().orElse(0);
     }
@@ -53,17 +46,14 @@ public final class CpuResult {
         return rows.stream().mapToInt(r -> r.response).average().orElse(0);
     }
 
-    /** Busy time / total time x 100. */
     double utilization() {
         return totalTime == 0 ? 0 : busyTime * 100.0 / totalTime;
     }
 
-    /** Processes / total time. */
     double throughput() {
         return totalTime == 0 ? 0 : rows.size() / (double) totalTime;
     }
 
-    /** Appends a block to a Gantt list, merging it with the previous block when contiguous. */
     static void addSegment(List<GanttSegment> gantt, String label, int processId, int start, int end) {
         if (end <= start) {
             return;

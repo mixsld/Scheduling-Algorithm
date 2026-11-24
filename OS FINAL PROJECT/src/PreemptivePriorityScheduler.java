@@ -1,16 +1,8 @@
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * CPU scheduling: Priority (preemptive).
- * Owner: [Member name]
- *
- * Simulated one time unit at a time. A lower number means higher priority.
- * A running process is preempted only by a strictly higher priority (lower number);
- * ties between waiting processes go to the earlier arrival, then the lower PID.
- */
+// Owner: Justin Panghulan
 public final class PreemptivePriorityScheduler implements CpuScheduler {
-
     @Override
     public String getName() {
         return "Priority (Preemptive)";
@@ -43,7 +35,7 @@ public final class PreemptivePriorityScheduler implements CpuScheduler {
             if (running == -1) {
                 running = best;
             } else if (best != -1 && processes.get(best).priority < processes.get(running).priority) {
-                running = best; // strictly higher priority preempts
+                running = best;
             }
 
             if (running == -1) {
@@ -75,7 +67,6 @@ public final class PreemptivePriorityScheduler implements CpuScheduler {
         return new CpuResult(rows, gantt, busy, time);
     }
 
-    /** Highest-priority arrived process with work left, or -1. Ties: earlier arrival, then lower PID. */
     private static int bestReady(List<CpuProcess> processes, int[] remaining, int time) {
         int best = -1;
         for (int i = 0; i < processes.size(); i++) {
@@ -100,7 +91,6 @@ public final class PreemptivePriorityScheduler implements CpuScheduler {
         return candidate.id < current.id;
     }
 
-    /** Records an IDLE block up to the next arrival and returns the new time. */
     private static int idleUntilNextArrival(List<CpuProcess> processes, int[] remaining, int time,
                                             List<GanttSegment> gantt) {
         int next = Integer.MAX_VALUE;

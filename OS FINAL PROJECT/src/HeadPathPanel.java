@@ -6,10 +6,6 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import javax.swing.JPanel;
 
-/**
- * Graph of the disk head's path. The horizontal axis is the cylinder number and time runs
- * downward, one row per head move. Return jumps are drawn dashed.
- */
 final class HeadPathPanel extends JPanel {
     private static final int LEFT = 44;
     private static final int RIGHT = 36;
@@ -114,7 +110,6 @@ final class HeadPathPanel extends JPanel {
         }
     }
 
-    /** Rounds up to 1, 2, 5 x 10^k so grid labels fall on readable numbers. */
     private static int niceStep(double raw) {
         double power = Math.pow(10, Math.floor(Math.log10(Math.max(raw, 1))));
         for (int factor : new int[] {1, 2, 5, 10}) {

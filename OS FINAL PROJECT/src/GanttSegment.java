@@ -1,9 +1,8 @@
-/** One block of the Gantt chart: a process (or IDLE) running from start to end. */
 public final class GanttSegment {
     static final String IDLE = "IDLE";
 
     final String label;
-    final int processId; // 0 for idle
+    final int processId;
     final int start;
     int end;
 

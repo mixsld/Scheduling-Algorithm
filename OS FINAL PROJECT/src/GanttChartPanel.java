@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.TreeSet;
 import javax.swing.JPanel;
 
-/** Draws a Gantt chart on a true time scale (every time unit has the same width), including idle time. */
 final class GanttChartPanel extends JPanel {
     private static final int MARGIN = 24;
     private static final int BAR_Y = 20;
@@ -34,7 +33,7 @@ final class GanttChartPanel extends JPanel {
     void setResult(List<GanttSegment> segments, int totalTime) {
         this.segments = new ArrayList<>(segments);
         this.totalTime = totalTime;
-        // Smallest width that still keeps every time unit readable; the scroll pane stretches us if there is room.
+
         setPreferredSize(Ui.size(MARGIN * 2 + totalTime * MIN_UNIT, 110));
         revalidate();
         repaint();
@@ -64,7 +63,6 @@ final class GanttChartPanel extends JPanel {
             return;
         }
 
-        // Fit the whole chart in the available width when possible; otherwise scroll at the minimum scale.
         pixelsPerUnit = Math.max(MIN_UNIT, Math.min(MAX_UNIT, (getWidth() - 2 * MARGIN) / Math.max(1, totalTime)));
         for (GanttSegment segment : segments) {
             drawSegment(g2, fm, segment);
@@ -80,7 +78,6 @@ final class GanttChartPanel extends JPanel {
         g2.setColor(segment.isIdle() ? new Color(0xE6DDCF) : PALETTE[segment.processId % PALETTE.length]);
         g2.fillRect(x, BAR_Y, width, BAR_HEIGHT);
         if (segment.isIdle()) {
-            // diagonal hatching so idle time is visibly different from a process
             Graphics2D hatch = (Graphics2D) g2.create();
             hatch.clipRect(x, BAR_Y, width, BAR_HEIGHT);
             hatch.setColor(new Color(0xC9BBA5));

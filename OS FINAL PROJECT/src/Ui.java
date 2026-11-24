@@ -19,9 +19,7 @@ import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.JTableHeader;
 
-/** Shared look (colours, fonts, buttons, tables) and input-parsing helpers for the GUI. */
 final class Ui {
-    // Palette: cream, teal, charcoal, orange.
     static final Color INK = new Color(0x323A45);
     static final Color TEAL = new Color(0x76ABAE);
     static final Color TEAL_DARK = new Color(0x3F7F83);
@@ -32,26 +30,21 @@ final class Ui {
     static final Color TEXT = INK;
     static final Color MUTED = new Color(0x6C6A66);
     static final Color ERROR = new Color(0xB8330E);
-    static final Color OK = new Color(0x2F6F73);
 
     static final Font BASE = new Font("Segoe UI", Font.PLAIN, 14);
     static final Font BOLD = BASE.deriveFont(Font.BOLD);
     static final Font SMALL = BASE.deriveFont(12f);
-    static final Font HEADING = new Font("Georgia", Font.BOLD, 22);
+    static final Font HEADING = new Font("Arial", Font.BOLD, 22);
 
     private Ui() {
     }
 
-    // ---------------------------------------------------------------- input parsing
-
-    /** Thrown for any invalid user input; the message is shown to the user as-is. */
     static final class InputException extends Exception {
         InputException(String message) {
             super(message);
         }
     }
 
-    /** Parses a whole number in [min, max], with a clear message for empty, non-numeric and out-of-range input. */
     static int parseInt(String raw, String label, int min, int max) throws InputException {
         String text = raw == null ? "" : raw.trim();
         if (text.isEmpty()) {
@@ -73,11 +66,8 @@ final class Ui {
         return (int) value;
     }
 
-    // ---------------------------------------------------------------- widgets
-
-    /** Flat button: solid fill, or just an outline that fills with teal on hover. */
     static final class FlatButton extends JButton {
-        private final Color fill; // null = outline style
+        private final Color fill;
         private boolean hover;
 
         FlatButton(String text, Color fill, Color foreground) {
@@ -129,17 +119,14 @@ final class Ui {
         }
     }
 
-    /** Main action (Run). */
     static JButton primaryButton(String text) {
         return new FlatButton(text, ORANGE, INK);
     }
 
-    /** Everything else: outlined. */
     static JButton secondaryButton(String text) {
         return new FlatButton(text, null, INK);
     }
 
-    /** Section box: thin border and a bold title. */
     static JPanel card(String title) {
         JPanel panel = new JPanel();
         panel.setBackground(PANEL);
@@ -150,7 +137,6 @@ final class Ui {
         return panel;
     }
 
-    /** Charcoal title bar with an orange rule underneath and an optional button on the right. */
     static JPanel headerBar(String title, String subtitle, JButton rightButton) {
         JPanel bar = new JPanel(new BorderLayout());
         bar.setBackground(INK);
@@ -164,11 +150,13 @@ final class Ui {
         JLabel t = new JLabel(title);
         t.setFont(HEADING);
         t.setForeground(BG);
-        JLabel s = new JLabel(subtitle);
-        s.setFont(BASE);
-        s.setForeground(TEAL);
         text.add(t);
-        text.add(s);
+        if (subtitle != null) {
+            JLabel s = new JLabel(subtitle);
+            s.setFont(BASE);
+            s.setForeground(TEAL);
+            text.add(s);
+        }
         bar.add(text, BorderLayout.CENTER);
         if (rightButton != null) {
             rightButton.setForeground(BG);
@@ -177,7 +165,6 @@ final class Ui {
         return bar;
     }
 
-    /** A result figure: small caption over a bold value, marked with an orange bar on the left. */
     static JPanel metricTile(String caption, JLabel valueLabel) {
         JPanel tile = new JPanel();
         tile.setLayout(new BoxLayout(tile, BoxLayout.Y_AXIS));
@@ -215,7 +202,6 @@ final class Ui {
         ((DefaultTableCellRenderer) header.getDefaultRenderer()).setHorizontalAlignment(SwingConstants.CENTER);
     }
 
-    /** Wraps a message so a JLabel breaks it across lines at the given pixel width. */
     static String wrap(String message, int widthPx) {
         String safe = message.replace("&", "&amp;").replace("<", "&lt;");
         return "<html><body style='width:" + widthPx + "px'>" + safe + "</body></html>";

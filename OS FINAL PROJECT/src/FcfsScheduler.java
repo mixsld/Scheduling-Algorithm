@@ -2,15 +2,8 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * CPU scheduling: First-Come, First-Served (non-preemptive).
- * Owner: [Member name]
- *
- * Processes run in order of arrival; ties go to the lower PID.
- * If nothing has arrived yet, the CPU idles until the next arrival.
- */
+// Owner: Justin Panghulan
 public final class FcfsScheduler implements CpuScheduler {
-
     @Override
     public String getName() {
         return "First-Come, First-Served (FCFS)";

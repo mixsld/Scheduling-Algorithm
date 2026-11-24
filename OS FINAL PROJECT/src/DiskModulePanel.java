@@ -17,25 +17,18 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
 
-/**
- * Screen for one disk scheduling algorithm: inputs, seek sequence, movement table, metrics and head-path graph.
- * All scheduling is done by the {@link DiskScheduler} it is given; this class only handles the interface.
- */
 final class DiskModulePanel extends JPanel {
     static final int DEFAULT_DISK_SIZE = 200;
     static final int MAX_DISK_SIZE = 9999;
     static final int MAX_REQUESTS = 50;
-    private static final int MAX_SEEK_RATE = 1000;
 
-    // Built-in practice data. Replace with the facilitator's sets if desired.
-    private static final String SAMPLE_REQUESTS = "98, 183, 37, 122, 14, 124, 65, 67";
-    private static final int SAMPLE_HEAD = 53;
+    private static final String SAMPLE_REQUESTS = "82, 170, 43, 140, 24, 16, 190";
+    private static final int SAMPLE_HEAD = 50;
 
     private final DiskScheduler scheduler;
 
     private final JTextField diskSizeField = new JTextField(String.valueOf(DEFAULT_DISK_SIZE), 8);
     private final JTextField headField = new JTextField(8);
-    private final JTextField seekRateField = new JTextField("1", 8);
     private final JComboBox<String> directionBox = new JComboBox<>(new String[] {
         "Toward higher cylinders", "Toward lower cylinders"});
     private final JTextArea requestsArea = new JTextArea(4, 20);
@@ -48,8 +41,6 @@ final class DiskModulePanel extends JPanel {
     private final HeadPathPanel pathPanel = new HeadPathPanel();
     private final JLabel totalMovement = new JLabel();
     private final JLabel averageSeek = new JLabel();
-    private final JLabel seekTime = new JLabel();
-    private final JLabel served = new JLabel();
 
     DiskModulePanel(DiskScheduler scheduler, Runnable onBack) {
         this.scheduler = scheduler;
@@ -61,7 +52,7 @@ final class DiskModulePanel extends JPanel {
         back.addActionListener(e -> onBack.run());
         add(Ui.headerBar("Disk Scheduling", scheduler.getName(), back), BorderLayout.NORTH);
 
-        movementModel = new DefaultTableModel(new String[] {"Step", "From", "To", "Head Movement", "Note"}, 0) {
+        movementModel = new DefaultTableModel(new String[] {"Step", "From", "To", "Head Movement"}, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
@@ -75,17 +66,13 @@ final class DiskModulePanel extends JPanel {
         add(buildOutputSide(), BorderLayout.CENTER);
     }
 
-    // ---------------------------------------------------------------- layout
-
     private JPanel buildInputSide() {
         JPanel card = Ui.card("Input");
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
 
-        card.add(labelled("Disk size (cylinders 0 to N-1):", diskSizeField));
+        card.add(labelled("Disk size (number of cylinders):", diskSizeField));
         card.add(Box.createVerticalStrut(8));
         card.add(labelled("Initial head position:", headField));
-        card.add(Box.createVerticalStrut(8));
-        card.add(labelled("Seek rate (ms per cylinder):", seekRateField));
         if (scheduler.usesDirection()) {
             card.add(Box.createVerticalStrut(8));
             directionBox.setFont(Ui.BASE);
@@ -93,9 +80,7 @@ final class DiskModulePanel extends JPanel {
         }
         card.add(Box.createVerticalStrut(12));
 
-        JLabel requestsLabel = new JLabel("Request queue (cylinder numbers, separated by commas or spaces; up to "
-                + MAX_REQUESTS + "):");
-        requestsLabel.setText(Ui.wrap(requestsLabel.getText(), 300));
+        JLabel requestsLabel = new JLabel(Ui.wrap("Request queue (cylinder numbers separated by commas or spaces):", 300));
         requestsLabel.setFont(Ui.BASE);
         card.add(requestsLabel);
         card.add(Box.createVerticalStrut(4));
@@ -167,11 +152,9 @@ final class DiskModulePanel extends JPanel {
         tableCard.add(movementScroll, BorderLayout.CENTER);
 
         JPanel metricsCard = Ui.card("Summary Metrics");
-        metricsCard.setLayout(new GridLayout(1, 4, 10, 10));
+        metricsCard.setLayout(new GridLayout(1, 2, 10, 10));
         metricsCard.add(Ui.metricTile("Total head movement", totalMovement));
         metricsCard.add(Ui.metricTile("Average seek distance", averageSeek));
-        metricsCard.add(Ui.metricTile("Total seek time", seekTime));
-        metricsCard.add(Ui.metricTile("Requests served", served));
 
         JPanel graphCard = Ui.card("Graph of the Head's Path");
         graphCard.setLayout(new BorderLayout());
@@ -200,21 +183,18 @@ final class DiskModulePanel extends JPanel {
         return scroll;
     }
 
-    // ---------------------------------------------------------------- actions
-
     private void runSimulation() {
         try {
             int diskSize = Ui.parseInt(diskSizeField.getText(), "Disk size", 2, MAX_DISK_SIZE);
             int head = Ui.parseInt(headField.getText(), "Initial head position", 0, diskSize - 1);
-            int seekRate = Ui.parseInt(seekRateField.getText(), "Seek rate", 1, MAX_SEEK_RATE);
             List<Integer> requests = readRequests(diskSize);
             DiskScheduler.Direction direction = directionBox.getSelectedIndex() == 0
                     ? DiskScheduler.Direction.HIGHER : DiskScheduler.Direction.LOWER;
 
-            show(scheduler.schedule(diskSize, head, requests, direction), seekRate);
-            setStatus("Simulation complete.", false);
+            status.setText(" ");
+            show(scheduler.schedule(diskSize, head, requests, direction));
         } catch (Ui.InputException ex) {
-            setStatus(ex.getMessage(), true);
+            showError(ex.getMessage());
         }
     }
 
@@ -237,46 +217,39 @@ final class DiskModulePanel extends JPanel {
     private void loadSample() {
         diskSizeField.setText(String.valueOf(DEFAULT_DISK_SIZE));
         headField.setText(String.valueOf(SAMPLE_HEAD));
-        seekRateField.setText("1");
         directionBox.setSelectedIndex(0);
         requestsArea.setText(SAMPLE_REQUESTS);
         clearOutput();
-        setStatus("Sample data loaded. Press Run Simulation.", false);
+        status.setText(" ");
     }
 
     private void reset() {
         diskSizeField.setText(String.valueOf(DEFAULT_DISK_SIZE));
         headField.setText("");
-        seekRateField.setText("1");
         directionBox.setSelectedIndex(0);
         requestsArea.setText("");
         clearOutput();
-        setStatus(" ", false);
+        status.setText(" ");
     }
 
-    // ---------------------------------------------------------------- output
-
-    private void show(DiskResult result, int seekRate) {
+    private void show(DiskResult result) {
         StringBuilder order = new StringBuilder(String.valueOf(result.path.get(0)));
         for (int i = 1; i < result.path.size(); i++) {
             order.append("  →  ").append(result.path.get(i));
         }
-        sequenceArea.setText("Head path: " + order + "\nServed in order: "
-                + result.serviceOrder.toString().replaceAll("[\\[\\]]", ""));
+        sequenceArea.setText(order.toString());
 
         movementModel.setRowCount(0);
         for (int step = 0; step < result.reasons.size(); step++) {
             movementModel.addRow(new Object[] {
                 step + 1, result.path.get(step), result.path.get(step + 1),
-                result.movementAt(step), result.reasons.get(step)});
+                result.movementAt(step)});
         }
         int height = movementTable.getRowHeight() * (result.reasons.size() + 1) + 6;
         movementScroll.setPreferredSize(new Dimension(400, Math.min(height, 360)));
 
         totalMovement.setText(result.totalMovement() + " cylinders");
         averageSeek.setText(String.format(Locale.US, "%.2f cylinders", result.averageSeek()));
-        seekTime.setText(result.seekTime(seekRate) + " ms");
-        served.setText(String.valueOf(result.requestCount));
 
         pathPanel.setResult(result);
         revalidate();
@@ -286,15 +259,15 @@ final class DiskModulePanel extends JPanel {
         sequenceArea.setText("");
         movementModel.setRowCount(0);
         movementScroll.setPreferredSize(new Dimension(400, 80));
-        for (JLabel label : new JLabel[] {totalMovement, averageSeek, seekTime, served}) {
+        for (JLabel label : new JLabel[] {totalMovement, averageSeek}) {
             label.setText("-");
         }
         pathPanel.clear();
         revalidate();
     }
 
-    private void setStatus(String message, boolean error) {
-        status.setForeground(error ? Ui.ERROR : Ui.OK);
-        status.setText(Ui.wrap((error ? "Error: " : "") + message, 300));
+    private void showError(String message) {
+        status.setForeground(Ui.ERROR);
+        status.setText(Ui.wrap("Error: " + message, 300));
     }
 }
