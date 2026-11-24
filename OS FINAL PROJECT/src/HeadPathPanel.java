@@ -74,7 +74,7 @@ final class HeadPathPanel extends JPanel {
 
     private void drawGridLine(Graphics2D g2, FontMetrics fm, int cylinder, double scale) {
         int x = (int) Math.round(LEFT + cylinder * scale);
-        g2.setColor(new Color(0xE6EAF0));
+        g2.setColor(new Color(0xE7DFD2));
         g2.drawLine(x, TOP - 10, x, getHeight() - 8);
         g2.setColor(Ui.MUTED);
         String label = String.valueOf(cylinder);
@@ -89,7 +89,7 @@ final class HeadPathPanel extends JPanel {
             int y1 = TOP + (i - 1) * ROW;
             int y2 = TOP + i * ROW;
             boolean jump = result.reasons.get(i - 1).equals(DiskResult.RETURN_JUMP);
-            g2.setColor(jump ? new Color(0xD9822B) : Ui.BLUE);
+            g2.setColor(jump ? Ui.ORANGE : Ui.TEAL_DARK);
             g2.setStroke(jump
                     ? new BasicStroke(2f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10f, new float[] {6f, 5f}, 0f)
                     : new BasicStroke(2f));
@@ -99,7 +99,7 @@ final class HeadPathPanel extends JPanel {
         for (int i = 0; i < points; i++) {
             int x = (int) Math.round(LEFT + result.path.get(i) * scale);
             int y = TOP + i * ROW;
-            g2.setColor(i == 0 ? Ui.OK : Ui.NAVY);
+            g2.setColor(i == 0 ? Ui.ORANGE : Ui.INK);
             g2.fillOval(x - 5, y - 5, 10, 10);
 
             g2.setColor(Ui.MUTED);

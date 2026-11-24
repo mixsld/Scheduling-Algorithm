@@ -156,7 +156,7 @@ final class DiskModulePanel extends JPanel {
         sequenceArea.setLineWrap(true);
         sequenceArea.setWrapStyleWord(true);
         sequenceArea.setFont(Ui.BASE.deriveFont(15f));
-        sequenceArea.setForeground(Ui.NAVY);
+        sequenceArea.setForeground(Ui.INK);
         sequenceArea.setOpaque(false);
         sequenceCard.add(sequenceArea, BorderLayout.CENTER);
 

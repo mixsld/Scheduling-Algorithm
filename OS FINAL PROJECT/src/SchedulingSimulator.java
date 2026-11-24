@@ -65,17 +65,17 @@ public final class SchedulingSimulator extends JFrame {
     private JPanel buildMenu() {
         JPanel page = new JPanel(new BorderLayout());
         page.setBackground(Ui.BG);
-        page.add(Ui.headerBar("CPU and Disk Scheduling Simulator", "ICS26012 – Operating Systems  |  Main Menu", null),
+        page.add(Ui.headerBar("CPU and Disk Scheduling Simulator", "ICS26012 – Operating Systems", null),
                 BorderLayout.NORTH);
 
         JPanel groups = new JPanel(new GridLayout(1, 2, 24, 0));
         groups.setOpaque(false);
-        groups.add(menuGroup("CPU Scheduling", "Gantt chart, per-process times, averages, utilization and throughput.",
-                menuButton("First-Come, First-Served (FCFS)", "Non-preemptive", "cpu-fcfs"),
-                menuButton("Priority", "Preemptive", "cpu-priority")));
-        groups.add(menuGroup("Disk Scheduling", "Seek sequence, head movement per step, total movement and head-path graph.",
-                menuButton("Circular SCAN (C-SCAN)", "Sweeps one way, then jumps back", "disk-cscan"),
-                menuButton("First-Come, First-Served (FCFS)", "Serves requests in arrival order", "disk-fcfs")));
+        groups.add(menuGroup("CPU Scheduling",
+                menuButton("FCFS  (non-preemptive)", "cpu-fcfs"),
+                menuButton("Priority  (preemptive)", "cpu-priority")));
+        groups.add(menuGroup("Disk Scheduling",
+                menuButton("C-SCAN", "disk-cscan"),
+                menuButton("FCFS", "disk-fcfs")));
 
         JPanel center = new JPanel(new java.awt.GridBagLayout());
         center.setOpaque(false);
@@ -87,7 +87,7 @@ public final class SchedulingSimulator extends JFrame {
 
         JButton about = Ui.secondaryButton("About");
         about.addActionListener(e -> showAbout());
-        JButton exit = Ui.primaryButton("Exit");
+        JButton exit = Ui.secondaryButton("Exit");
         exit.addActionListener(e -> confirmExit());
         JPanel footer = new JPanel(new GridLayout(1, 2, 12, 0));
         footer.setOpaque(false);
@@ -104,44 +104,32 @@ public final class SchedulingSimulator extends JFrame {
         return page;
     }
 
-    private JPanel menuGroup(String title, String description, JPanel... buttons) {
+    private JPanel menuGroup(String title, JButton... buttons) {
         JPanel card = Ui.card(title);
-        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-        JLabel desc = new JLabel(Ui.wrap(description, 380));
-        desc.setFont(Ui.BASE);
-        desc.setForeground(Ui.MUTED);
-        desc.setAlignmentX(LEFT_ALIGNMENT);
-        card.add(desc);
-        card.add(Box.createVerticalStrut(14));
-        for (JPanel button : buttons) {
-            button.setAlignmentX(LEFT_ALIGNMENT);
+        card.setLayout(new GridLayout(0, 1, 0, 10));
+        for (JButton button : buttons) {
             card.add(button);
-            card.add(Box.createVerticalStrut(12));
         }
         return card;
     }
 
-    private JPanel menuButton(String title, String subtitle, String target) {
-        JButton button = Ui.primaryButton("<html><b>" + title + "</b><br><span style='font-weight:normal'>"
-                + subtitle + "</span></html>");
+    private JButton menuButton(String title, String target) {
+        JButton button = Ui.secondaryButton(title);
         button.setHorizontalAlignment(SwingConstants.LEFT);
+        button.setFont(Ui.BASE.deriveFont(java.awt.Font.BOLD, 16f));
+        button.setBorder(BorderFactory.createEmptyBorder(16, 18, 16, 18));
         button.addActionListener(e -> cards.show(root, target));
-        JPanel holder = new JPanel(new BorderLayout());
-        holder.setOpaque(false);
-        holder.add(button, BorderLayout.CENTER);
-        holder.setMaximumSize(new Dimension(Integer.MAX_VALUE, 64));
-        holder.setPreferredSize(new Dimension(300, 64));
-        return holder;
+        return button;
     }
 
     private void showAbout() {
         JDialog dialog = new JDialog(this, "About", true);
         JPanel body = new JPanel();
         body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
-        body.setBackground(Color.WHITE);
+        body.setBackground(Ui.PANEL);
         body.setBorder(BorderFactory.createEmptyBorder(20, 28, 20, 28));
 
-        body.add(aboutLine("CPU and Disk Scheduling Simulator", Ui.BASE.deriveFont(java.awt.Font.BOLD, 18f), Ui.NAVY));
+        body.add(aboutLine("CPU and Disk Scheduling Simulator", Ui.BASE.deriveFont(java.awt.Font.BOLD, 18f), Ui.INK));
         body.add(aboutLine("ICS26012 – Operating Systems", Ui.BASE, Ui.MUTED));
         body.add(Box.createVerticalStrut(14));
         body.add(aboutLine(GROUP_NUMBER, Ui.BASE.deriveFont(java.awt.Font.BOLD, 16f), Ui.TEXT));
@@ -153,7 +141,7 @@ public final class SchedulingSimulator extends JFrame {
         JButton close = Ui.primaryButton("Close");
         close.addActionListener(e -> dialog.dispose());
         JPanel bottom = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.CENTER));
-        bottom.setBackground(Color.WHITE);
+        bottom.setBackground(Ui.PANEL);
         bottom.setBorder(BorderFactory.createEmptyBorder(0, 0, 16, 0));
         bottom.add(close);
 

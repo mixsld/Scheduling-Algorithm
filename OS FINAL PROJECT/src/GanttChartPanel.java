@@ -15,9 +15,9 @@ final class GanttChartPanel extends JPanel {
     private static final int BAR_Y = 20;
     private static final int BAR_HEIGHT = 48;
     private static final Color[] PALETTE = {
-        new Color(0x9EC5F0), new Color(0xF4B183), new Color(0xA9D9A5), new Color(0xE6A9D6),
-        new Color(0xF6DC7B), new Color(0x9ED9D3), new Color(0xC7B3EA), new Color(0xF2A5A5),
-        new Color(0xB8CF8A), new Color(0xA8B7C9)
+        new Color(0x76ABAE), new Color(0xF2946A), new Color(0xD8C3A0), new Color(0xE3B23C),
+        new Color(0xA3C4A0), new Color(0x9FB4C7), new Color(0xD99A9A), new Color(0xB9A9CC),
+        new Color(0x8CC3C6), new Color(0xE8C9A0)
     };
 
     private List<GanttSegment> segments = new ArrayList<>();
@@ -77,13 +77,13 @@ final class GanttChartPanel extends JPanel {
         int x = MARGIN + segment.start * pixelsPerUnit;
         int width = (segment.end - segment.start) * pixelsPerUnit;
 
-        g2.setColor(segment.isIdle() ? new Color(0xE9ECF1) : PALETTE[segment.processId % PALETTE.length]);
+        g2.setColor(segment.isIdle() ? new Color(0xE6DDCF) : PALETTE[segment.processId % PALETTE.length]);
         g2.fillRect(x, BAR_Y, width, BAR_HEIGHT);
         if (segment.isIdle()) {
             // diagonal hatching so idle time is visibly different from a process
             Graphics2D hatch = (Graphics2D) g2.create();
             hatch.clipRect(x, BAR_Y, width, BAR_HEIGHT);
-            hatch.setColor(new Color(0xC4CAD4));
+            hatch.setColor(new Color(0xC9BBA5));
             for (int offset = -BAR_HEIGHT; offset < width; offset += 10) {
                 hatch.drawLine(x + offset, BAR_Y + BAR_HEIGHT, x + offset + BAR_HEIGHT, BAR_Y);
             }
@@ -94,7 +94,7 @@ final class GanttChartPanel extends JPanel {
         g2.drawRect(x, BAR_Y, width, BAR_HEIGHT);
 
         int labelWidth = fm.stringWidth(segment.label);
-        if (labelWidth + 6 <= width) {
+        if (labelWidth + 2 <= width) {
             g2.setFont(Ui.BOLD);
             g2.setColor(segment.isIdle() ? Ui.MUTED : Ui.TEXT);
             g2.drawString(segment.label, x + (width - g2.getFontMetrics().stringWidth(segment.label)) / 2,

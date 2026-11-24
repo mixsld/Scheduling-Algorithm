@@ -1,3 +1,4 @@
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
@@ -8,6 +9,7 @@ import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -19,18 +21,23 @@ import javax.swing.table.JTableHeader;
 
 /** Shared look (colours, fonts, buttons, tables) and input-parsing helpers for the GUI. */
 final class Ui {
-    static final Color NAVY = new Color(0x1F3A5F);
-    static final Color BLUE = new Color(0x2F6FB0);
-    static final Color BG = new Color(0xF4F6FA);
-    static final Color TEXT = new Color(0x1E2733);
-    static final Color MUTED = new Color(0x5B6676);
-    static final Color ERROR = new Color(0xB3261E);
-    static final Color OK = new Color(0x1B7F4B);
-    static final Color BORDER = new Color(0xD3D9E3);
+    // Palette: cream, teal, charcoal, orange.
+    static final Color INK = new Color(0x323A45);
+    static final Color TEAL = new Color(0x76ABAE);
+    static final Color TEAL_DARK = new Color(0x3F7F83);
+    static final Color ORANGE = new Color(0xFF5A20);
+    static final Color BG = new Color(0xEFE6DA);
+    static final Color PANEL = new Color(0xF8F3EA);
+    static final Color BORDER = new Color(0xC9BBA5);
+    static final Color TEXT = INK;
+    static final Color MUTED = new Color(0x6C6A66);
+    static final Color ERROR = new Color(0xB8330E);
+    static final Color OK = new Color(0x2F6F73);
 
     static final Font BASE = new Font("Segoe UI", Font.PLAIN, 14);
     static final Font BOLD = BASE.deriveFont(Font.BOLD);
     static final Font SMALL = BASE.deriveFont(12f);
+    static final Font HEADING = new Font("Georgia", Font.BOLD, 22);
 
     private Ui() {
     }
@@ -68,14 +75,14 @@ final class Ui {
 
     // ---------------------------------------------------------------- widgets
 
-    /** Rounded flat button that works with any colour under every look-and-feel. */
+    /** Flat button: solid fill, or just an outline that fills with teal on hover. */
     static final class FlatButton extends JButton {
-        private final Color base;
+        private final Color fill; // null = outline style
         private boolean hover;
 
-        FlatButton(String text, Color base, Color foreground) {
+        FlatButton(String text, Color fill, Color foreground) {
             super(text);
-            this.base = base;
+            this.fill = fill;
             setFont(BOLD);
             setForeground(foreground);
             setContentAreaFilled(false);
@@ -83,7 +90,7 @@ final class Ui {
             setFocusPainted(false);
             setOpaque(false);
             setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            setBorder(BorderFactory.createEmptyBorder(9, 18, 9, 18));
+            setBorder(BorderFactory.createEmptyBorder(8, 16, 8, 16));
             addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseEntered(MouseEvent e) {
@@ -103,71 +110,86 @@ final class Ui {
         protected void paintComponent(Graphics g) {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            Color fill = !isEnabled() ? BORDER
-                    : getModel().isPressed() ? base.darker().darker()
-                    : hover ? base.darker() : base;
-            g2.setColor(fill);
-            g2.fillRoundRect(0, 0, getWidth(), getHeight(), 12, 12);
+            int w = getWidth() - 1;
+            int h = getHeight() - 1;
+            if (fill != null) {
+                g2.setColor(getModel().isPressed() ? fill.darker() : hover ? fill.darker() : fill);
+                g2.fillRoundRect(0, 0, w, h, 4, 4);
+            } else {
+                if (hover || getModel().isPressed()) {
+                    g2.setColor(TEAL);
+                    g2.fillRoundRect(0, 0, w, h, 4, 4);
+                }
+                g2.setColor(INK);
+                g2.setStroke(new java.awt.BasicStroke(1.5f));
+                g2.drawRoundRect(0, 0, w, h, 4, 4);
+            }
             g2.dispose();
             super.paintComponent(g);
         }
     }
 
+    /** Main action (Run). */
     static JButton primaryButton(String text) {
-        return new FlatButton(text, BLUE, Color.WHITE);
+        return new FlatButton(text, ORANGE, INK);
     }
 
+    /** Everything else: outlined. */
     static JButton secondaryButton(String text) {
-        return new FlatButton(text, new Color(0xE3E8F0), TEXT);
+        return new FlatButton(text, null, INK);
     }
 
-    /** White panel with a thin border and a bold title. */
+    /** Section box: thin border and a bold title. */
     static JPanel card(String title) {
         JPanel panel = new JPanel();
-        panel.setBackground(Color.WHITE);
-        TitledBorder border = BorderFactory.createTitledBorder(BorderFactory.createLineBorder(BORDER), " " + title + " ");
+        panel.setBackground(PANEL);
+        TitledBorder border = BorderFactory.createTitledBorder(BorderFactory.createLineBorder(INK, 1), " " + title + " ");
         border.setTitleFont(BOLD);
-        border.setTitleColor(NAVY);
+        border.setTitleColor(INK);
         panel.setBorder(BorderFactory.createCompoundBorder(border, BorderFactory.createEmptyBorder(6, 10, 10, 10)));
         return panel;
     }
 
-    /** Dark header bar with a title, a subtitle and an optional button on the right. */
+    /** Charcoal title bar with an orange rule underneath and an optional button on the right. */
     static JPanel headerBar(String title, String subtitle, JButton rightButton) {
-        JPanel bar = new JPanel(new java.awt.BorderLayout());
-        bar.setBackground(NAVY);
-        bar.setBorder(BorderFactory.createEmptyBorder(12, 20, 12, 20));
+        JPanel bar = new JPanel(new BorderLayout());
+        bar.setBackground(INK);
+        bar.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(0, 0, 4, 0, ORANGE),
+                BorderFactory.createEmptyBorder(12, 20, 12, 20)));
 
         JPanel text = new JPanel();
         text.setOpaque(false);
-        text.setLayout(new javax.swing.BoxLayout(text, javax.swing.BoxLayout.Y_AXIS));
+        text.setLayout(new BoxLayout(text, BoxLayout.Y_AXIS));
         JLabel t = new JLabel(title);
-        t.setFont(BASE.deriveFont(Font.BOLD, 20f));
-        t.setForeground(Color.WHITE);
+        t.setFont(HEADING);
+        t.setForeground(BG);
         JLabel s = new JLabel(subtitle);
         s.setFont(BASE);
-        s.setForeground(new Color(0xC7D5EA));
+        s.setForeground(TEAL);
         text.add(t);
         text.add(s);
-        bar.add(text, java.awt.BorderLayout.CENTER);
+        bar.add(text, BorderLayout.CENTER);
         if (rightButton != null) {
-            bar.add(rightButton, java.awt.BorderLayout.EAST);
+            rightButton.setForeground(BG);
+            bar.add(rightButton, BorderLayout.EAST);
         }
         return bar;
     }
 
-    /** A small "caption over value" tile for summary metrics. */
+    /** A result figure: small caption over a bold value, marked with an orange bar on the left. */
     static JPanel metricTile(String caption, JLabel valueLabel) {
         JPanel tile = new JPanel();
-        tile.setLayout(new javax.swing.BoxLayout(tile, javax.swing.BoxLayout.Y_AXIS));
-        tile.setBackground(BG);
+        tile.setLayout(new BoxLayout(tile, BoxLayout.Y_AXIS));
+        tile.setOpaque(false);
         tile.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(BORDER), BorderFactory.createEmptyBorder(8, 12, 8, 12)));
+                BorderFactory.createMatteBorder(0, 3, 0, 0, ORANGE),
+                BorderFactory.createEmptyBorder(2, 10, 2, 6)));
         JLabel c = new JLabel(caption);
         c.setFont(SMALL);
         c.setForeground(MUTED);
         valueLabel.setFont(BASE.deriveFont(Font.BOLD, 17f));
-        valueLabel.setForeground(NAVY);
+        valueLabel.setForeground(INK);
         valueLabel.setText("-");
         tile.add(c);
         tile.add(valueLabel);
@@ -177,14 +199,15 @@ final class Ui {
     static void styleTable(JTable table) {
         table.setFont(BASE);
         table.setRowHeight(26);
-        table.setGridColor(BORDER);
-        table.setSelectionBackground(new Color(0xDCE8F7));
-        table.setSelectionForeground(TEXT);
+        table.setForeground(INK);
+        table.setGridColor(new Color(0xE0D6C6));
+        table.setSelectionBackground(new Color(0xD9E8E8));
+        table.setSelectionForeground(INK);
         table.setFillsViewportHeight(true);
         JTableHeader header = table.getTableHeader();
         header.setFont(BOLD);
-        header.setBackground(new Color(0xE3E8F0));
-        header.setForeground(NAVY);
+        header.setBackground(TEAL);
+        header.setForeground(INK);
         header.setReorderingAllowed(false);
         DefaultTableCellRenderer center = new DefaultTableCellRenderer();
         center.setHorizontalAlignment(SwingConstants.CENTER);
