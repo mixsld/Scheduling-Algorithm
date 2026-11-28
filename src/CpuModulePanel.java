@@ -1,5 +1,8 @@
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.GridLayout;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -7,16 +10,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import javax.swing.BorderFactory;
-import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
-import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JTable;
-import javax.swing.ScrollPaneConstants;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.table.DefaultTableModel;
 
@@ -37,6 +37,7 @@ final class CpuModulePanel extends JPanel {
     private final DefaultTableModel resultModel;
     private final JTable resultTable;
     private final JScrollPane resultScroll;
+    private final JLabel avgCompletion = new JLabel();
     private final JLabel avgTurnaround = new JLabel();
     private final JLabel avgWaiting = new JLabel();
     private final JLabel avgResponse = new JLabel();
@@ -48,23 +49,27 @@ final class CpuModulePanel extends JPanel {
         this.sample = sample;
         this.usesPriority = scheduler.usesPriority();
 
-        setLayout(new BorderLayout());
-        setBackground(Ui.BG);
+        setLayout(new BorderLayout(10, 10));
+        setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        JButton back = Ui.secondaryButton("← Main Menu");
+        JButton back = new JButton("Back to Main Menu");
         back.addActionListener(e -> onBack.run());
-        add(Ui.headerBar("CPU Scheduling", scheduler.getName(), back), BorderLayout.NORTH);
+        JLabel title = new JLabel("CPU Scheduling - " + scheduler.getName());
+        title.setFont(title.getFont().deriveFont(Font.BOLD, 16f));
+        JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        top.add(back);
+        top.add(title);
+        add(top, BorderLayout.NORTH);
 
         String[] inputColumns = usesPriority
                 ? new String[] {"PID", "Arrival Time", "Burst Time", "Priority"}
                 : new String[] {"PID", "Arrival Time", "Burst Time"};
         inputModel = new DefaultTableModel(inputColumns, 0);
         inputTable = new JTable(inputModel);
-        Ui.styleTable(inputTable);
 
         String[] resultColumns = usesPriority
-                ? new String[] {"PID", "Completion", "Turnaround", "Waiting", "Response"}
-                : new String[] {"PID", "Completion", "Turnaround", "Waiting", "Response"};
+                ? new String[] {"PID", "Arrival Time", "Burst Time", "Priority", "Start", "Completion", "Turnaround", "Waiting", "Response"}
+                : new String[] {"PID", "Arrival Time", "Burst Time", "Start", "Completion", "Turnaround", "Waiting", "Response"};
         resultModel = new DefaultTableModel(resultColumns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -72,105 +77,78 @@ final class CpuModulePanel extends JPanel {
             }
         };
         resultTable = new JTable(resultModel);
-        Ui.styleTable(resultTable);
         resultScroll = new JScrollPane(resultTable);
 
-        add(buildInputSide(), BorderLayout.WEST);
-        add(buildOutputSide(), BorderLayout.CENTER);
+        add(buildInputPanel(), BorderLayout.WEST);
+        add(buildOutputPanel(), BorderLayout.CENTER);
 
         resizeInputRows(3);
+        clearOutput();
     }
 
-    private JPanel buildInputSide() {
-        JPanel card = Ui.card("Input");
-        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+    private JPanel buildInputPanel() {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBorder(BorderFactory.createTitledBorder("Input"));
 
-        JPanel countRow = new JPanel(new BorderLayout(8, 0));
-        countRow.setOpaque(false);
-        JLabel countLabel = new JLabel("Number of processes (1-" + MAX_PROCESSES + "):");
-        countLabel.setFont(Ui.BASE);
-        countSpinner.setFont(Ui.BASE);
+        JPanel countRow = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        countRow.add(new JLabel("Number of processes (1-" + MAX_PROCESSES + "):"));
         countSpinner.addChangeListener(e -> resizeInputRows((Integer) countSpinner.getValue()));
-        countRow.add(countLabel, BorderLayout.CENTER);
-        countRow.add(countSpinner, BorderLayout.EAST);
-        countRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 32));
+        countRow.add(countSpinner);
+        countRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, countRow.getPreferredSize().height));
+        panel.add(countRow);
 
         JScrollPane tableScroll = new JScrollPane(inputTable);
-        tableScroll.setPreferredSize(new Dimension(380, 330));
+        tableScroll.setPreferredSize(new Dimension(340, 300));
+        panel.add(tableScroll);
 
-        JButton run = Ui.primaryButton("Run Simulation");
+        JButton run = new JButton("Run Simulation");
         run.addActionListener(e -> runSimulation());
-        JButton sample = Ui.secondaryButton("Load Sample Data");
-        sample.addActionListener(e -> loadSample());
-        JButton reset = Ui.secondaryButton("Reset / Clear");
+        JButton load = new JButton("Load Sample Data");
+        load.addActionListener(e -> loadSample());
+        JButton reset = new JButton("Reset / Clear");
         reset.addActionListener(e -> reset());
-        JPanel buttons = new JPanel(new GridLayout(0, 1, 0, 8));
-        buttons.setOpaque(false);
+        JPanel buttons = new JPanel(new GridLayout(3, 1, 5, 5));
+        buttons.setBorder(BorderFactory.createEmptyBorder(10, 0, 5, 0));
         buttons.add(run);
-        buttons.add(sample);
+        buttons.add(load);
         buttons.add(reset);
+        panel.add(buttons);
 
-        status.setFont(Ui.BASE);
-
-        for (JComponent part : new JComponent[] {countRow, tableScroll, buttons, status}) {
-            part.setAlignmentX(LEFT_ALIGNMENT);
-        }
-        card.add(countRow);
-        card.add(Box.createVerticalStrut(8));
-        card.add(tableScroll);
-        card.add(Box.createVerticalStrut(12));
-        card.add(buttons);
-        card.add(Box.createVerticalStrut(10));
-        card.add(status);
-
-        JPanel wrapper = new JPanel(new BorderLayout());
-        wrapper.setBackground(Ui.BG);
-        wrapper.setBorder(BorderFactory.createEmptyBorder(14, 14, 14, 7));
-        wrapper.add(card, BorderLayout.NORTH);
-        return wrapper;
+        status.setForeground(Color.RED);
+        panel.add(status);
+        return panel;
     }
 
-    private JScrollPane buildOutputSide() {
-        JPanel ganttCard = Ui.card("Gantt Chart");
-        ganttCard.setLayout(new BorderLayout());
-        JScrollPane ganttScroll = new JScrollPane(gantt,
-                ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        ganttScroll.setBorder(BorderFactory.createLineBorder(Ui.BORDER));
-        ganttScroll.setPreferredSize(new Dimension(400, 150));
-        ganttCard.add(ganttScroll, BorderLayout.CENTER);
+    private JPanel buildOutputPanel() {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
-        JPanel tableCard = Ui.card("Results per Process");
-        tableCard.setLayout(new BorderLayout());
-        resultScroll.setBorder(BorderFactory.createLineBorder(Ui.BORDER));
-        resultScroll.setPreferredSize(new Dimension(400, 80));
-        tableCard.add(resultScroll, BorderLayout.CENTER);
+        JScrollPane ganttScroll = new JScrollPane(gantt);
+        ganttScroll.setBorder(BorderFactory.createTitledBorder("Gantt Chart"));
+        ganttScroll.setPreferredSize(new Dimension(400, 135));
+        panel.add(ganttScroll);
 
-        JPanel metricsCard = Ui.card("Summary Metrics");
-        metricsCard.setLayout(new GridLayout(2, 3, 10, 10));
-        metricsCard.add(Ui.metricTile("Average turnaround time", avgTurnaround));
-        metricsCard.add(Ui.metricTile("Average waiting time", avgWaiting));
-        metricsCard.add(Ui.metricTile("Average response time", avgResponse));
-        metricsCard.add(Ui.metricTile("CPU utilization", utilization));
-        metricsCard.add(Ui.metricTile("Throughput (processes per time unit)", throughput));
+        resultScroll.setBorder(BorderFactory.createTitledBorder("Results"));
+        panel.add(resultScroll);
 
-        JPanel column = new JPanel();
-        column.setLayout(new BoxLayout(column, BoxLayout.Y_AXIS));
-        column.setBackground(Ui.BG);
-        column.add(ganttCard);
-        column.add(Box.createVerticalStrut(12));
-        column.add(tableCard);
-        column.add(Box.createVerticalStrut(12));
-        column.add(metricsCard);
-
-        JPanel wrapper = new JPanel(new BorderLayout());
-        wrapper.setBackground(Ui.BG);
-        wrapper.setBorder(BorderFactory.createEmptyBorder(14, 7, 14, 14));
-        wrapper.add(column, BorderLayout.NORTH);
-
-        JScrollPane scroll = new JScrollPane(wrapper);
-        scroll.setBorder(null);
-        scroll.getVerticalScrollBar().setUnitIncrement(16);
-        return scroll;
+        JPanel averages = new JPanel(new GridLayout(6, 2, 10, 2));
+        averages.setBorder(BorderFactory.createTitledBorder("Averages"));
+        averages.add(new JLabel("Avg. Completion Time:"));
+        averages.add(avgCompletion);
+        averages.add(new JLabel("Avg. Turn Around Time:"));
+        averages.add(avgTurnaround);
+        averages.add(new JLabel("Avg. Waiting Time:"));
+        averages.add(avgWaiting);
+        averages.add(new JLabel("Avg. Response Time:"));
+        averages.add(avgResponse);
+        averages.add(new JLabel("CPU Utilization:"));
+        averages.add(utilization);
+        averages.add(new JLabel("Throughput:"));
+        averages.add(throughput);
+        averages.setMaximumSize(new Dimension(Integer.MAX_VALUE, 150));
+        panel.add(averages);
+        return panel;
     }
 
     private void runSimulation() {
@@ -178,7 +156,7 @@ final class CpuModulePanel extends JPanel {
             List<CpuProcess> processes = readProcesses();
             status.setText(" ");
             show(scheduler.schedule(processes));
-        } catch (Ui.InputException ex) {
+        } catch (InputCheck.InputException ex) {
             showError(ex.getMessage());
         }
     }
@@ -229,7 +207,7 @@ final class CpuModulePanel extends JPanel {
         }
     }
 
-    private List<CpuProcess> readProcesses() throws Ui.InputException {
+    private List<CpuProcess> readProcesses() throws InputCheck.InputException {
         stopEditing();
         List<CpuProcess> processes = new ArrayList<>();
         Map<Integer, Integer> rowOfPid = new HashMap<>();
@@ -237,16 +215,16 @@ final class CpuModulePanel extends JPanel {
         for (int row = 0; row < inputModel.getRowCount(); row++) {
             int rowNumber = row + 1;
             String pidText = cell(row, 0).replaceFirst("^[Pp]", "");
-            int id = Ui.parseInt(pidText, "PID in row " + rowNumber, 1, 999);
+            int id = InputCheck.parseInt(pidText, "PID in row " + rowNumber, 1, 999);
             if (rowOfPid.containsKey(id)) {
-                throw new Ui.InputException("PID P" + id + " is used in both row " + rowOfPid.get(id)
+                throw new InputCheck.InputException("PID P" + id + " is used in both row " + rowOfPid.get(id)
                         + " and row " + rowNumber + ". Every PID must be different.");
             }
             rowOfPid.put(id, rowNumber);
 
-            int arrival = Ui.parseInt(cell(row, 1), "Arrival time for P" + id, 0, MAX_VALUE);
-            int burst = Ui.parseInt(cell(row, 2), "Burst time for P" + id, 1, MAX_VALUE);
-            int priority = usesPriority ? Ui.parseInt(cell(row, 3), "Priority for P" + id, 0, MAX_VALUE) : 0;
+            int arrival = InputCheck.parseInt(cell(row, 1), "Arrival time for P" + id, 0, MAX_VALUE);
+            int burst = InputCheck.parseInt(cell(row, 2), "Burst time for P" + id, 1, MAX_VALUE);
+            int priority = usesPriority ? InputCheck.parseInt(cell(row, 3), "Priority for P" + id, 0, MAX_VALUE) : 0;
             processes.add(new CpuProcess(id, arrival, burst, priority));
         }
         return processes;
@@ -264,35 +242,43 @@ final class CpuModulePanel extends JPanel {
         for (CpuResult.Row row : result.rows) {
             List<Object> cells = new ArrayList<>();
             cells.add(row.process.name());
+            cells.add(row.process.arrival);
+            cells.add(row.process.burst);
+            if (usesPriority) {
+                cells.add(row.process.priority);
+            }
+            cells.add(row.firstStart);
             cells.add(row.completion);
             cells.add(row.turnaround);
             cells.add(row.waiting);
             cells.add(row.response);
             resultModel.addRow(cells.toArray());
         }
-        int height = resultTable.getRowHeight() * (result.rows.size() + 1) + 6;
-        resultScroll.setPreferredSize(new Dimension(400, Math.min(height, 330)));
+        resultScroll.setPreferredSize(new Dimension(400, 24 * (result.rows.size() + 1) + 40));
 
-        avgTurnaround.setText(String.format(Locale.US, "%.2f", result.avgTurnaround()));
-        avgWaiting.setText(String.format(Locale.US, "%.2f", result.avgWaiting()));
-        avgResponse.setText(String.format(Locale.US, "%.2f", result.avgResponse()));
-        utilization.setText(String.format(Locale.US, "%.2f%%", result.utilization()));
-        throughput.setText(String.format(Locale.US, "%.4f", result.throughput()));
+        avgCompletion.setText(String.format(Locale.US, "%.2f ms", result.avgCompletion()));
+        avgTurnaround.setText(String.format(Locale.US, "%.2f ms", result.avgTurnaround()));
+        avgWaiting.setText(String.format(Locale.US, "%.2f ms", result.avgWaiting()));
+        avgResponse.setText(String.format(Locale.US, "%.2f ms", result.avgResponse()));
+        utilization.setText(String.format(Locale.US, "%.2f %%", result.utilization()));
+        throughput.setText(String.format(Locale.US, "%.4f processes/ms", result.throughput()));
         revalidate();
     }
 
     private void clearOutput() {
         gantt.clear();
         resultModel.setRowCount(0);
-        resultScroll.setPreferredSize(new Dimension(400, 80));
-        for (JLabel label : new JLabel[] {avgTurnaround, avgWaiting, avgResponse, utilization, throughput}) {
-            label.setText("-");
-        }
+        resultScroll.setPreferredSize(new Dimension(400, 70));
+        avgCompletion.setText("-");
+        avgTurnaround.setText("-");
+        avgWaiting.setText("-");
+        avgResponse.setText("-");
+        utilization.setText("-");
+        throughput.setText("-");
         revalidate();
     }
 
     private void showError(String message) {
-        status.setForeground(Ui.ERROR);
-        status.setText(Ui.wrap("Error: " + message, 300));
+        status.setText("<html><body style='width:280px'>Error: " + message + "</body></html>");
     }
 }

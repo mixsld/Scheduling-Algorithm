@@ -17,16 +17,16 @@ public final class PreemptivePriorityScheduler implements CpuScheduler {
     public CpuResult schedule(List<CpuProcess> processes) {
         int n = processes.size();
         int[] remaining = new int[n];
-        int[] firstStart = new int[n];
         int[] completion = new int[n];
+        int[] firstStart = new int[n];
         for (int i = 0; i < n; i++) {
             remaining[i] = processes.get(i).burst;
+            firstStart[i] = -1;
         }
 
         List<GanttSegment> gantt = new ArrayList<>();
         int running = -1;
         int time = 0;
-        int busy = 0;
         int done = 0;
 
         while (done < n) {
@@ -44,14 +44,12 @@ public final class PreemptivePriorityScheduler implements CpuScheduler {
             }
 
             CpuProcess current = processes.get(running);
-            if (remaining[running] == current.burst) {
+            if (firstStart[running] == -1) {
                 firstStart[running] = time;
             }
-
             CpuResult.addSegment(gantt, current.name(), current.id, time, time + 1);
             remaining[running]--;
             time++;
-            busy++;
 
             if (remaining[running] == 0) {
                 completion[running] = time;
@@ -64,7 +62,7 @@ public final class PreemptivePriorityScheduler implements CpuScheduler {
         for (int i = 0; i < n; i++) {
             rows.add(new CpuResult.Row(processes.get(i), firstStart[i], completion[i]));
         }
-        return new CpuResult(rows, gantt, busy, time);
+        return new CpuResult(rows, gantt, time);
     }
 
     private static int bestReady(List<CpuProcess> processes, int[] remaining, int time) {

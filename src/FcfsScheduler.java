@@ -22,7 +22,6 @@ public final class FcfsScheduler implements CpuScheduler {
         List<CpuResult.Row> rows = new ArrayList<>();
         List<GanttSegment> gantt = new ArrayList<>();
         int time = 0;
-        int busy = 0;
 
         for (CpuProcess p : ordered) {
             if (time < p.arrival) {
@@ -31,10 +30,9 @@ public final class FcfsScheduler implements CpuScheduler {
             }
             int start = time;
             time += p.burst;
-            busy += p.burst;
             CpuResult.addSegment(gantt, p.name(), p.id, start, time);
             rows.add(new CpuResult.Row(p, start, time));
         }
-        return new CpuResult(rows, gantt, busy, time);
+        return new CpuResult(rows, gantt, time);
     }
 }

@@ -23,15 +23,17 @@ public final class CpuResult {
 
     final List<Row> rows;
     final List<GanttSegment> gantt;
-    final int busyTime;
     final int totalTime;
 
-    CpuResult(List<Row> rows, List<GanttSegment> gantt, int busyTime, int totalTime) {
+    CpuResult(List<Row> rows, List<GanttSegment> gantt, int totalTime) {
         this.rows = new ArrayList<>(rows);
         this.rows.sort(Comparator.comparingInt((Row r) -> r.process.id));
         this.gantt = gantt;
-        this.busyTime = busyTime;
         this.totalTime = totalTime;
+    }
+
+    double avgCompletion() {
+        return rows.stream().mapToInt(r -> r.completion).average().orElse(0);
     }
 
     double avgTurnaround() {
@@ -46,8 +48,18 @@ public final class CpuResult {
         return rows.stream().mapToInt(r -> r.response).average().orElse(0);
     }
 
+    int busyTime() {
+        int busy = 0;
+        for (GanttSegment segment : gantt) {
+            if (!segment.isIdle()) {
+                busy += segment.end - segment.start;
+            }
+        }
+        return busy;
+    }
+
     double utilization() {
-        return totalTime == 0 ? 0 : busyTime * 100.0 / totalTime;
+        return totalTime == 0 ? 0 : busyTime() * 100.0 / totalTime;
     }
 
     double throughput() {

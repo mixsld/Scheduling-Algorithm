@@ -19,7 +19,7 @@ java -jar SchedulingSimulator.jar
 or double-click `SchedulingSimulator.jar`.
 
 ## Build from source
-From the `OS FINAL PROJECT` folder:
+From the project folder (the one containing `src`):
 ```
 javac -d out src/*.java
 jar cfm SchedulingSimulator.jar manifest.txt -C out .
@@ -34,8 +34,9 @@ jar cfm SchedulingSimulator.jar manifest.txt -C out .
 - Time starts at 0 in whole units; context-switch time is 0; idle CPU is shown in the Gantt chart.
 - CPU ties: earlier arrival, then lower PID. Lower priority number = higher priority; no aging.
 - Preemptive Priority preempts only on a strictly higher priority.
-- Turnaround = Completion - Arrival; Waiting = Turnaround - Burst; Response = First CPU time - Arrival.
-- Utilization = busy / total x 100; Throughput = processes / total time.
+- Turnaround Time = Completion Time - Arrival Time; Waiting Time = Turnaround Time - Burst Time; Response Time = First CPU Time - Arrival Time;
+  CPU Utilization = busy time / total time x 100; Throughput = processes / total time. The CPU screens show Completion, Turnaround,
+  Waiting and Response Time for each process, the averages (in ms), CPU Utilization, Throughput, and a Gantt chart.
 - Disk cylinders run from 0 to N-1 (default N = 200). Head movement is the sum of absolute differences
   between successive positions. C-SCAN travels to the physical end of the disk; the return jump is counted
   and shown in the path. Duplicate requests are served consecutively (zero movement).
@@ -43,4 +44,4 @@ jar cfm SchedulingSimulator.jar manifest.txt -C out .
 ## Code layout
 - `CpuScheduler` / `DiskScheduler` - shared interfaces. Algorithm classes (`FcfsScheduler`,
   `PreemptivePriorityScheduler`, `CScanScheduler`, `DiskFcfsScheduler`) contain no UI code.
-- `SchedulingSimulator` (menu), `CpuModulePanel`, `DiskModulePanel`, `GanttChartPanel`, `HeadPathPanel`, `Ui` - interface.
+- `SchedulingSimulator` (menu), `CpuModulePanel`, `DiskModulePanel`, `GanttChartPanel`, `HeadPathPanel`, `InputCheck` - interface.
